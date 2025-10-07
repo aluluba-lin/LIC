@@ -42,24 +42,34 @@
         th, td { 
             border: 1px solid #ddd; 
             padding: 12px 8px; 
+            /* 修正：所有表格單元格的預設對齊方式，目前仍為 left */
             text-align: left; 
         }
         th { 
             background-color: #eee;
             color: #555;
         }
-        /* --- 欄位寬度設定 (保留上次的修改) --- */
         
+        /* --- 修正 1: 小計標題 (<th>) 靠右對齊 --- */
+        /* 小計欄位是第四欄 */
+        #priceTable thead th:nth-child(4) { 
+            text-align: right; 
+            width: 25%; 
+        }
+        
+        /* --- 修正 2: 小計數字 (<td>) 靠右對齊 --- */
+        .subtotal { 
+            text-align: right; 
+        }
+        
+        /* --- 欄位寬度設定 (保留上次的修改) --- */
         #priceTable thead th:nth-child(2) { /* 單價 (15%) */
             width: 15%; 
         }
         #priceTable thead th:nth-child(3) { /* 數量 (15%) */
             width: 15%; 
         }
-        #priceTable thead th:nth-child(4) { /* 小計 (25%) */
-            width: 25%; 
-        }
-        /* 品項名稱 (第 1 欄) 自動佔據剩下的 45% 寬度 */
+        
         /* ---------------------------------------------------- */
 
         /* 數量輸入欄位優化 */
@@ -78,7 +88,7 @@
             outline: none;
         }
         
-        /* --- 修正：總計欄位樣式改回柔和風格 --- */
+        /* 總計欄位樣式 */
         .total-row td { 
             font-weight: bold; 
             background-color: #ffccbc; /* 柔和背景色 */
@@ -87,8 +97,7 @@
             border: 1px solid #ddd; /* 恢復標準邊框 */
             text-shadow: none; /* 移除文字陰影 */
         }
-        /* -------------------------------------- */
-
+        
         #clearButton {
             width: 100%;
             padding: 15px;
@@ -108,7 +117,7 @@
             th, td { padding: 8px 5px; }
             h1 { font-size: 1.5em; }
             .version { font-size: 0.8em; }
-            .total-row td { font-size: 1.1em; padding: 12px 8px; } /* 手機版總計調整 */
+            .total-row td { font-size: 1.1em; padding: 12px 8px; } 
             #clearButton { padding: 12px; font-size: 16px; }
         }
     </style>
@@ -125,8 +134,7 @@
                     <th>品項名稱</th>
                     <th>單價 (NTD)</th> 
                     <th>數量</th>
-                    <th>小計</th>
-                </tr>
+                    <th>小計</th> </tr>
             </thead>
             <tbody>
                 </tbody>
@@ -181,14 +189,11 @@
 
         // --- 核心函式 2: 點擊自動清空 (歸零) ---
         function clearOnFocus(event) {
-            // 點擊時，一律將當前值清空為空白，避免覆蓋舊值
             event.target.value = ''; 
         }
         
         function fillZeroOnBlur(event) {
-             // 當數量輸入框失去焦點時
              if (event.target.value === '') {
-                 // 如果它是空的，則設為 0
                  event.target.value = 0;
              }
              calculateTotal(); // 重新計算
@@ -237,7 +242,7 @@
                 // 小計
                 const subtotalCell = newRow.insertCell();
                 subtotalCell.classList.add('subtotal');
-                subtotalCell.textContent = '0';
+                subtotalCell.textContent = '0'; // 數字已靠右對齊 (透過 .subtotal 樣式)
             });
             
             // 初次計算
