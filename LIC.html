@@ -42,37 +42,37 @@
         th, td { 
             border: 1px solid #ddd; 
             padding: 12px 8px; 
-            /* 修正：所有表格單元格的預設對齊方式，目前仍為 left */
-            text-align: left; 
+            text-align: left; /* 預設為左對齊 */
         }
         th { 
             background-color: #eee;
             color: #555;
         }
         
-        /* --- 修正 1: 小計標題 (<th>) 靠右對齊 --- */
-        /* 小計欄位是第四欄 */
+        /* --- 欄位寬度與對齊設定 --- */
+        
+        /* 單價標題和數字 (第二欄) 靠右對齊 */
+        #priceTable thead th:nth-child(2),
+        #priceTable tbody tr td:nth-child(2) {
+            text-align: right;
+            width: 15%; 
+        }
+
+        /* 數量標題 (第三欄) 靠右對齊 */
+        #priceTable thead th:nth-child(3) {
+            text-align: right;
+            width: 15%;
+        }
+
+        /* 小計標題 (第四欄) 靠右對齊 */
         #priceTable thead th:nth-child(4) { 
             text-align: right; 
             width: 25%; 
         }
         
-        /* --- 修正 2: 小計數字 (<td>) 靠右對齊 --- */
-        .subtotal { 
-            text-align: right; 
-        }
-        
-        /* --- 欄位寬度設定 (保留上次的修改) --- */
-        #priceTable thead th:nth-child(2) { /* 單價 (15%) */
-            width: 15%; 
-        }
-        #priceTable thead th:nth-child(3) { /* 數量 (15%) */
-            width: 15%; 
-        }
-        
         /* ---------------------------------------------------- */
 
-        /* 數量輸入欄位優化 */
+        /* 數量輸入欄位優化 (input 內容本身已設為靠右對齊) */
         input[type="number"] { 
             width: 100%; 
             padding: 5px;
@@ -88,15 +88,26 @@
             outline: none;
         }
         
+        /* 小計數字 (<td>) 靠右對齊 */
+        .subtotal { 
+            text-align: right; 
+        }
+        
         /* 總計欄位樣式 */
         .total-row td { 
             font-weight: bold; 
-            background-color: #ffccbc; /* 柔和背景色 */
-            color: #333; /* 恢復深色文字 */
-            font-size: 1.5em; /* 恢復字體大小 */
-            border: 1px solid #ddd; /* 恢復標準邊框 */
-            text-shadow: none; /* 移除文字陰影 */
+            background-color: #ffccbc; 
+            color: #333; 
+            font-size: 1.5em;
+            border: 1px solid #ddd; 
+            text-shadow: none; 
         }
+
+        /* --- 修正：總計金額儲存格 (td) 靠右對齊 --- */
+        #grandTotal {
+            text-align: right; 
+        }
+        /* -------------------------------------- */
         
         #clearButton {
             width: 100%;
@@ -134,7 +145,8 @@
                     <th>品項名稱</th>
                     <th>單價 (NTD)</th> 
                     <th>數量</th>
-                    <th>小計</th> </tr>
+                    <th>小計</th>
+                </tr>
             </thead>
             <tbody>
                 </tbody>
@@ -242,7 +254,7 @@
                 // 小計
                 const subtotalCell = newRow.insertCell();
                 subtotalCell.classList.add('subtotal');
-                subtotalCell.textContent = '0'; // 數字已靠右對齊 (透過 .subtotal 樣式)
+                subtotalCell.textContent = '0'; 
             });
             
             // 初次計算
