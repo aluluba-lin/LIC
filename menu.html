@@ -29,7 +29,7 @@
             text-align: center;
             font-size: 0.8em;
             color: #777;
-            margin-top: -10px; /* 向上微調與標題的間距 */
+            margin-top: -10px; 
             margin-bottom: 20px;
         }
         
@@ -182,12 +182,19 @@
             padding: 10px;
             border-top: 2px solid #d32f2f;
         }
-        #orderSummaryContainer h2 {
+        #summaryHeader {
             color: #d32f2f;
             font-size: 1.2em;
             margin-top: 0;
             margin-bottom: 10px;
         }
+        #phoneSummary {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
         #orderSummaryList {
             list-style: none;
             padding: 0;
@@ -234,7 +241,7 @@
         <div class="top-controls">
             <div class="phone-input-group">
                 <label for="phoneNumber">手機:</label>
-                <input type="tel" id="phoneNumber" placeholder="請輸入手機號碼" required>
+                <input type="tel" id="phoneNumber" placeholder="請輸入手機號碼" oninput="updateOrderSummaryDisplay()" required>
             </div>
             
             <div class="language-controls">
@@ -256,6 +263,7 @@
         
         <div id="orderSummaryContainer">
             <h2 id="summaryHeader">點單明細</h2>
+            <p id="phoneSummary">手機號碼: 未輸入</p>
             <ul id="orderSummaryList">
                 <li id="emptySummaryMessage">尚未點選任何商品。</li>
             </ul>
@@ -269,27 +277,27 @@
     </div>
 
     <script>
-        // --- 1. 多語言字串對應機制 (更新標題) ---
+        // --- 1. 多語言字串對應機制 ---
         let currentLang = 'zh';
 
         const LANGUAGES = {
             zh: {
-                title: "巧喰雞點單系統", nonSpicy: "不辣", spicy: "辣", cut: "切 5 塊", total: "總計", ntd: "NTD", orderSummary: "點單明細", emptySummary: "尚未點選任何商品。", qty: "份",
+                title: "巧喰雞點單系統", nonSpicy: "不辣", spicy: "辣", cut: "切 5 塊", total: "總計", ntd: "NTD", orderSummary: "點單明細", emptySummary: "尚未點選任何商品。", qty: "份", phoneLabel: "手機號碼: ", phoneEmpty: "未輸入",
                 item_charcoal_chicken: "碳烤香雞排", item_fried_chicken: "炸雞排", item_fries: "薯條", item_sweet_potato: "甜不辣", item_chicken_crispy: "雞肉酥", item_squid_crispy: "魷魚酥", item_fishball: "花枝丸",
                 flavor_honey_sauce: "蜜汁", flavor_seaweed: "海苔", flavor_bbq: "燒烤", flavor_lemon: "檸檬", flavor_spicy_chili: "麻辣", flavor_plum: "梅子", flavor_garlic: "蒜香", flavor_shichimi: "七味", flavor_wasabi: "哇沙米", flavor_black_pepper: "黑胡椒", flavor_pepper: "胡椒", flavor_curry: "咖哩", flavor_seaweed_plum: "海苔梅子",
             },
             en: {
-                title: "Chicken Delight Ordering System", nonSpicy: "Non-Spicy", spicy: "Spicy", cut: "Cut 5 Pcs", total: "Grand Total", ntd: "NTD", orderSummary: "Order Summary", emptySummary: "No items ordered yet.", qty: "Pcs",
+                title: "Chicken Delight Ordering System", nonSpicy: "Non-Spicy", spicy: "Spicy", cut: "Cut 5 Pcs", total: "Grand Total", ntd: "NTD", orderSummary: "Order Summary", emptySummary: "No items ordered yet.", qty: "Pcs", phoneLabel: "Phone Number: ", phoneEmpty: "Not entered",
                 item_charcoal_chicken: "Charcoal Chicken Fillet", item_fried_chicken: "Fried Chicken Fillet", item_fries: "Fries", item_sweet_potato: "Sweet Potato Tempura", item_chicken_crispy: "Crispy Chicken Bits", item_squid_crispy: "Crispy Squid", item_fishball: "Fish Balls",
                 flavor_honey_sauce: "Honey Sauce", flavor_seaweed: "Seaweed", flavor_bbq: "BBQ", flavor_lemon: "Lemon", flavor_spicy_chili: "Spicy Chili", flavor_plum: "Plum", flavor_garlic: "Garlic", flavor_shichimi: "Shichimi", flavor_wasabi: "Wasabi", flavor_black_pepper: "Black Pepper", flavor_pepper: "Pepper", flavor_curry: "Curry", flavor_seaweed_plum: "Seaweed & Plum",
             },
             ja: {
-                title: "チキンデライト注文システム", nonSpicy: "辛くない", spicy: "辛い", cut: "5ピースにカット", total: "合計", ntd: "NTD", orderSummary: "注文明細", emptySummary: "まだ商品が注文されていません。", qty: "個",
+                title: "チキンデライト注文システム", nonSpicy: "辛くない", spicy: "辛い", cut: "5ピースにカット", total: "合計", ntd: "NTD", orderSummary: "注文明細", emptySummary: "まだ商品が注文されていません。", qty: "個", phoneLabel: "電話番號: ", phoneEmpty: "未入力",
                 item_charcoal_chicken: "炭火焼きチキン", item_fried_chicken: "フライドチキン", item_fries: "フライドポテト", item_sweet_potato: "さつま揚げ", item_chicken_crispy: "雞肉サクサク", item_squid_crispy: "イカサクサク", item_fishball: "イカ団子",
                 flavor_honey_sauce: "蜜のタレ", flavor_seaweed: "海苔", flavor_bbq: "焼き肉", flavor_lemon: "レモン", flavor_spicy_chili: "激辛", flavor_plum: "梅", flavor_garlic: "ニンニク", flavor_shichimi: "七味", flavor_wasabi: "わさび", flavor_black_pepper: "黒胡椒", flavor_pepper: "胡椒", flavor_curry: "カレー", flavor_seaweed_plum: "海苔梅",
             },
             ko: {
-                title: "치킨 딜라이트 주문 시스템", nonSpicy: "순한 맛", spicy: "매운 맛", cut: "5조각 커팅", total: "총합계", ntd: "NTD", orderSummary: "주문 내역", emptySummary: "아직 주문된 상품이 없습니다。", qty: "개",
+                title: "치킨 딜라이트 주문 시스템", nonSpicy: "순한 맛", spicy: "매운 맛", cut: "5조각 커팅", total: "총합계", ntd: "NTD", orderSummary: "주문 내역", emptySummary: "아직 주문된 상품이 없습니다。", qty: "개", phoneLabel: "전화번호: ", phoneEmpty: "입력되지 않음",
                 item_charcoal_chicken: "숯불 구이 치킨", item_fried_chicken: "후라이드 치킨", item_fries: "감자 튀김", item_sweet_potato: "어묵", item_chicken_crispy: "바삭한 닭고기", item_squid_crispy: "바삭한 오징어", item_fishball: "오징어볼",
                 flavor_honey_sauce: "꿀 소스", flavor_seaweed: "김", flavor_bbq: "바베큐", flavor_lemon: "레몬", flavor_spicy_chili: "매콤한 고추", flavor_plum: "자두", flavor_garlic: "마늘", flavor_shichimi: "시치미", flavor_wasabi: "와사비", flavor_black_pepper: "블랙 페퍼", flavor_pepper: "후추", flavor_curry: "카레", flavor_seaweed_plum: "김&자두",
             }
@@ -316,6 +324,7 @@
         const tabButtonsContainer = document.getElementById('tabButtons');
         const menuContainer = document.getElementById('menuContainer');
         const languageSelector = document.getElementById('languageSelector');
+        const phoneNumberInput = document.getElementById('phoneNumber');
 
         // --- 3. 核心函式 ---
 
@@ -334,11 +343,17 @@
             renderOrderSummary();
         }
         
-        // --- 點單明細渲染函式 ---
+        // --- 點單明細渲染函式 (更新：包含手機號碼) ---
         function renderOrderSummary() {
             const L = LANGUAGES[currentLang];
             const activeOrders = [];
             let totalOrders = 0;
+            
+            // 獲取手機號碼
+            const phone = phoneNumberInput.value.trim();
+            const phoneDisplay = phone === '' ? L.phoneEmpty : phone;
+            document.getElementById('phoneSummary').textContent = `${L.phoneLabel}${phoneDisplay}`;
+
 
             document.querySelectorAll('.order-group').forEach(group => {
                 const input = group.querySelector('.quantity-input');
@@ -395,6 +410,11 @@
                     summaryList.appendChild(li);
                 });
             }
+        }
+
+        // --- 專門用於手機號碼輸入變動時更新明細的函式 ---
+        function updateOrderSummaryDisplay() {
+            renderOrderSummary();
         }
 
 
@@ -523,7 +543,7 @@
             // 2. 重新初始化菜單 (更新品項和口味翻譯)
             initializeMenu();
             
-            // 3. 重新計算總額/明細以更新格式和內容
+            // 3. 重新計算總額/明細以更新格式和內容 (包含手機號碼顯示)
             calculateTotal(); 
 
             // 4. 確保語言選擇器顯示正確值
