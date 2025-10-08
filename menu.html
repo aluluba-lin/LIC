@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>巧口食雞點單系統</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 10px; 
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        /* --- 分頁導航樣式 --- */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap; 
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab-button {
+            flex-grow: 1; 
+            flex-shrink: 1;
+            padding: 10px 8px; 
+            cursor: pointer;
+            background-color: #eee;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            text-align: center;
+            font-size: 0.9em; 
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-right: -1px; 
+            margin-bottom: -2px; 
+        }
+        .tab-button:last-child {
+            margin-right: 0; 
+        }
+
+        .tab-button.active {
+            background-color: #fff;
+            border-bottom: 2px solid #d32f2f; 
+            z-index: 1;
+        }
+        .tab-content {
+            display: none; 
+            min-height: 200px; 
+        }
+        .tab-content.active {
+            display: block; 
+        }
+        /* -------------------------------------- */
+        
+        /* --- 口味選項樣式 --- */
+        .flavor-option {
+            display: flex;
+            flex-direction: column; /* 改為垂直佈局，讓點單組件分行顯示 */
+            padding: 10px 0; 
+            border-bottom: 1px dashed #ddd;
+        }
+        .flavor-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 修正：點單組件容器，使用 Grid 來佈局多組輸入 */
+        .order-groups-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 在寬螢幕下分兩欄或更多 */
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        /* 單一輸入組 (數量、辣度、切法) */
+        .order-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            background-color: #fcfcfc;
+        }
+        .input-controls {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+        input[type="number"] { 
+            width: 40px; 
+            padding: 4px;
+            text-align: right; 
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        .checkbox-label {
+            font-size: 0.9em;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+        
+        /* 小計欄位 */
+        .subtotal-display {
+            flex-shrink: 0; /* 不壓縮小計欄位 */
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #388e3c;
+        }
+        
+        /* --- 總計樣式 --- */
+        .total-summary {
+            padding: 15px;
+            background-color: #ffccbc;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: right;
+        }
+        .total-summary span {
+            color: #d32f2f;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>巧口食雞點單系統</h1>
+
+        <div class="tabs" id="tabButtons">
+        </div>
+
+        <div id="menuContainer">
+        </div>
+
+        <div class="total-summary">
+            總計：NTD <span id="grandTotal">0</span>
+        </div>
+        
+    </div>
+
+    <script>
+        // --- 菜單數據結構 ---
+        const MENU = [
+            { 
+                id: 'charcoal_chicken', 
+                name: "碳烤香雞排", 
+                price: 85, 
+                hasSpecialOptions: true, /* 新增標記：需要雙份輸入和特殊選項 */
+                flavors: ["蜜汁", "海苔", "燒烤", "檸檬", "麻辣", "梅子", "蒜香", "七味", "哇沙米", "黑胡椒", "胡椒"]
+            },
+            { 
+                id: 'fried_chicken', 
+                name: "炸雞排", 
+                price: 80,
+                hasSpecialOptions: true, /* 新增標記：需要雙份輸入和特殊選項 */
+                flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] 
+            },
+            // 其他炸物 (保持單一輸入)
+            { id: 'fries', name: "薯條", price: 35, flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] },
+            { id: 'sweet_potato', name: "甜不辣", price: 35, flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] },
+            { id: 'chicken_crispy', name: "雞肉酥", price: 65, flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] },
+            { id: 'squid_crispy', name: "魷魚酥", price: 65, flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] },
+            { id: 'fishball', name: "花枝丸", price: 30, flavors: ["咖哩", "麻辣", "哇沙米", "黑胡椒", "海苔梅子", "海苔", "梅子", "蒜香", "胡椒", "七味"] },
+        ];
+
+        const tabButtonsContainer = document.getElementById('tabButtons');
+        const menuContainer = document.getElementById('menuContainer');
+        const grandTotalElement = document.getElementById('grandTotal');
+
+        // --- 核心函式 1: 計算總和 (維持不變) ---
+        function calculateTotal() {
+            let grandTotal = 0;
+            // 選擇所有具有 quantity-input 類別的元素
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+
+            quantityInputs.forEach(input => {
+                const quantity = parseInt(input.value) || 0;
+                
+                // 獲取價格 (現在綁定在最近的 .flavor-option 或 .order-group 上，為了簡化，我們直接取父層 .flavor-option 的 dataset)
+                const itemPrice = parseFloat(input.closest('.flavor-option').dataset.price) || 0;
+                
+                const subtotal = itemPrice * quantity;
+                grandTotal += subtotal;
+
+                // 更新小計。對於雙份輸入，小計會顯示在 order-group 內
+                input.closest('.order-group').querySelector('.subtotal-display').textContent = subtotal.toLocaleString('zh-TW');
+            });
+
+            grandTotalElement.textContent = grandTotal.toLocaleString('zh-TW');
+        }
+
+        // --- 核心函式 2: 處理 Tab 分頁切換 (維持不變) ---
+        function changeTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab-button[data-tab-id="${tabId}"]`).classList.add('active');
+        }
+        
+        // --- 核心函式 3: 清空輸入框 / 補 0 (維持不變) ---
+        function handleInputFocus(event) {
+            event.target.value = ''; 
+        }
+
+        function handleInputBlur(event) {
+            if (event.target.value === '') {
+                event.target.value = 0; 
+            }
+            calculateTotal(); 
+        }
+
+        // --- 新增：輔助函式，生成單一的點單輸入組 ---
+        function generateOptionHTML(price, flavor, groupIndex, hasSpecialOptions = false) {
+            let specialOptions = '';
+            
+            // 只有在碳烤雞排和炸雞排這類品項才加入 "加辣" 和 "切5塊"
+            if (hasSpecialOptions) {
+                specialOptions = `
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="spicy-checkbox"> 辣
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="cut-checkbox"> 切
+                    </label>
+                `;
+            } else {
+                // 一般炸物，只保留一個加辣選項
+                 specialOptions = `
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="spicy-checkbox"> 加辣
+                    </label>
+                `;
+            }
+
+
+            return `
+                <div class="order-group" data-price="${price}">
+                    <div class="input-controls">
+                        <input type="number" class="quantity-input" value="0" min="0">
+                        ${specialOptions}
+                        <span class="subtotal-display">0</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 初始化頁面：動態生成菜單 Tab 按鈕和內容 ---
+        function initializeMenu() {
+            let isFirstItem = true;
+
+            MENU.forEach(item => {
+                // 1. 生成 Tab 按鈕 (維持不變)
+                const tabButton = document.createElement('div');
+                tabButton.className = isFirstItem ? 'tab-button active' : 'tab-button';
+                tabButton.textContent = item.name;
+                tabButton.dataset.tabId = item.id;
+                tabButton.onclick = () => changeTab(item.id);
+                tabButtonsContainer.appendChild(tabButton);
+
+                // 2. 生成 Tab 內容區
+                const tabContent = document.createElement('div');
+                tabContent.id = item.id;
+                tabContent.className = isFirstItem ? 'tab-content active' : 'tab-content';
+                
+                // 3. 建立口味清單
+                item.flavors.forEach((flavor, index) => {
+                    const option = document.createElement('div');
+                    option.className = 'flavor-option';
+                    option.dataset.price = item.price; // 價格綁定在最外層，方便計算
+                    
+                    let innerHTML = `<div class="flavor-header">${flavor}</div>`;
+
+                    // 檢查是否需要雙份輸入
+                    if (item.hasSpecialOptions) {
+                        innerHTML += `
+                            <div class="order-groups-container">
+                                ${generateOptionHTML(item.price, flavor, 1, true)}
+                                ${generateOptionHTML(item.price, flavor, 2, true)}
+                            </div>
+                        `;
+                    } else {
+                        // 一般炸物，單份輸入
+                        innerHTML += `
+                            <div class="order-groups-container">
+                                ${generateOptionHTML(item.price, flavor, 1, false)}
+                            </div>
+                        `;
+                    }
+
+                    option.innerHTML = innerHTML;
+                    tabContent.appendChild(option);
+                });
+
+                menuContainer.appendChild(tabContent);
+                
+                // 設置第一個 Tab
+                if (isFirstItem) {
+                    isFirstItem = false;
+                }
+            });
+            
+            // 4. 綁定事件給所有動態生成的輸入框
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('input', calculateTotal);
+                input.addEventListener('focus', handleInputFocus);
+                input.addEventListener('blur', handleInputBlur);
+            });
+
+            // 初次計算總計
+            calculateTotal();
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeMenu);
+    </script>
+</body>
+</html>
